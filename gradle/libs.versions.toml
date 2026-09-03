@@ -24,6 +24,7 @@ asm = "9.9.1"
 autoService = "1.1.1"
 checkerFramework = "4.0.0"
 cobalt = { strictly = "0.9.9" }
+endive = "1.0.1"
 commonsCli = "1.11.0"
 jetbrainsAnnotations = "26.1.0"
 jspecify = "1.0.0"
@@ -72,6 +73,11 @@ versionCatalogUpdate = "1.1.0"
 
 [libraries]
 # Normal dependencies
+endive-runtime = { module = "run.endive:runtime", version.ref = "endive" }
+endive-wasi = { module = "run.endive:wasi", version.ref = "endive" }
+endive-wasm = { module = "run.endive:wasm", version.ref = "endive" }
+endive-log = { module = "run.endive:log", version.ref = "endive" }
+endive-annotations = { module = "run.endive:annotations", version.ref = "endive" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
 autoService = { module = "com.google.auto.service:auto-service", version.ref = "autoService" }

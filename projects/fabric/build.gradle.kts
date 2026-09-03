@@ -13,6 +13,15 @@ plugins {
 
 val modVersion: String by extra
 
+// Keep these tests separate from cctest, whose managed-computer harness replaces
+// ServerContext.luaMachine and therefore cannot verify the production runtime.
+val wasmTest by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += sourceSets.main.get().output + sourceSets.main.get().runtimeClasspath
+}
+configurations[wasmTest.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[wasmTest.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+
 val allProjects = listOf(":core-api", ":core", ":fabric-api").map { evaluationDependsOn(it) }
 cct {
     inlineProject(":common")
@@ -84,6 +93,10 @@ dependencies {
     "testWithIris"(libs.sodium.fabric)
 
     "includeRuntimeOnly"(libs.cobalt)
+    "includeRuntimeOnly"(libs.endive.runtime)
+    "includeRuntimeOnly"(libs.endive.wasi)
+    "includeRuntimeOnly"(libs.endive.wasm)
+    "includeRuntimeOnly"(libs.endive.log)
     "includeRuntimeOnly"(libs.netty.socks)
     "includeRuntimeOnly"(libs.netty.proxy)
 
@@ -92,6 +105,7 @@ dependencies {
 
     // Pull in our other projects. See comments in MinecraftConfigurations on this nastiness.
     "localImplementation"(project(":core"))
+    add(wasmTest.implementationConfigurationName, project(":core"))
     "localImplementation"(commonClasses(project(":fabric-api")))
     clientImplementation(clientClasses(project(":fabric-api")))
 
@@ -111,6 +125,9 @@ loom {
     accessWidenerPath = project(":common").file("src/main/resources/computercraft.accesswidener")
 
     mods {
+        register("computercraft-wasm-test") {
+            sourceSet(wasmTest)
+        }
         register("computercraft") {
             // Configure sources when running via the IDE. Note these don't add build dependencies (hence why it's safe
             // to use common), only change how the launch.cfg file is generated.
@@ -131,6 +148,15 @@ loom {
     }
 
     runs {
+        register("wasmGametest") {
+            displayName = "Wasm turtle world test"
+            server()
+            sourceSet = wasmTest.name
+            runDirectory = layout.buildDirectory.dir("runWasmGametest")
+            systemProperties.put("fabric-api.gametest", "true")
+            systemProperties.put("fabric-api.gametest.report-file", layout.buildDirectory.file("test-results/wasm-gametest.xml").getAbsolutePath())
+            systemProperties.put("bleh.test.evidence", layout.buildDirectory.file("reports/wasm/turtle-shell.txt").getAbsolutePath())
+        }
         configureEach {
             generateRunConfig = true
             ideConfigFolder = "Fabric"
@@ -242,8 +268,13 @@ tasks.test { dependsOn(tasks.generateDLIConfig) }
 val runGametest = tasks.named<JavaExec>("runGametest") {
     usesService(MinecraftRunnerService.get(gradle))
 }
+val wasmTestResults = layout.buildDirectory.dir("test-results")
+val runWasmGametest = tasks.named<JavaExec>("runWasmGametest") {
+    usesService(MinecraftRunnerService.get(gradle))
+    doFirst { wasmTestResults.get().asFile.mkdirs() }
+}
 cct.jacoco(runGametest)
-tasks.check { dependsOn(runGametest) }
+tasks.check { dependsOn(runGametest, runWasmGametest) }
 
 val runGametestClient by tasks.registering(ClientJavaExec::class) {
     description = "Runs client-side gametests with no mods"

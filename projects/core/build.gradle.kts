@@ -4,6 +4,8 @@
 
 import cc.tweaked.gradle.CCTweakedPlugin
 import cc.tweaked.gradle.getAbsolutePath
+import java.security.MessageDigest
+import java.util.HexFormat
 
 plugins {
     `java-library`
@@ -20,6 +22,9 @@ val modVersion: String by extra
 dependencies {
     api(project(":core-api"))
     implementation(libs.cobalt)
+    implementation(libs.endive.runtime)
+    implementation(libs.endive.wasi)
+    compileOnly(libs.endive.annotations)
     implementation(libs.fastutil)
     implementation(libs.guava)
     implementation(libs.netty.http)
@@ -40,7 +45,32 @@ dependencies {
 
 kotlin.compilerOptions.jvmTarget = CCTweakedPlugin.KOTLIN_TARGET
 
+val buildLuaWasm by tasks.registering(Exec::class) {
+    group = "build"
+    description = "Rebuild the bundled Lua Wasm boot disk with WASI SDK 34."
+    commandLine("python3", "wasm/build.py")
+}
+
+val verifyLuaWasm by tasks.registering {
+    group = "verification"
+    description = "Verify bundled Wasm matches guest sources, without a native compiler."
+    val manifest = layout.projectDirectory.file("wasm/build.sha256")
+    val root = layout.projectDirectory
+    mustRunAfter(buildLuaWasm)
+    doLast {
+        manifest.asFile.forEachLine { line ->
+            val (expected, name) = line.split("  ", limit = 2)
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(root.file(name).asFile.readBytes())
+            check(HexFormat.of().formatHex(digest) == expected) {
+                "Stale Wasm image: $name changed. Run ./gradlew :core:buildLuaWasm."
+            }
+        }
+    }
+}
+
 tasks.processResources {
+    dependsOn(verifyLuaWasm)
     inputs.property("gitHash", cct.gitHash)
 
     var props = mapOf("gitContributors" to cct.gitContributors.get().joinToString("\n"))

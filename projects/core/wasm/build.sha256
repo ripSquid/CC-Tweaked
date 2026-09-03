@@ -1,0 +1,4 @@
+574f56aa02617634f8a5940efe36489e1281846e869852937e411f59f76bc2ae  wasm/build.py
+1655447658eb29f216132d821f92009876a38ae4a316f160f6106b8b05c6ec53  wasm/boot.c
+eac7e53b7d7408bac251d1df2fbe2709783a0adb214835a6cbd8dfc1280a7994  src/main/resources/wasm/bootstrap.lua
+27ed9f17064210a33e2aab6719ac1ab587e6dd488abf0e40a50e5c1e76df6e91  src/main/resources/wasm/boot-lua.wasm

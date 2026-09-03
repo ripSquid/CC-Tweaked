@@ -15,6 +15,7 @@ import dan200.computercraft.impl.Peripherals;
 import dan200.computercraft.impl.PocketUpgrades;
 import dan200.computercraft.impl.TurtleUpgrades;
 import dan200.computercraft.shared.command.CommandComputerCraft;
+import dan200.computercraft.shared.computer.core.ServerContext;
 import dan200.computercraft.shared.config.ConfigSpec;
 import dan200.computercraft.shared.details.FluidDetails;
 import dan200.computercraft.shared.network.NetworkMessages;
@@ -22,6 +23,7 @@ import dan200.computercraft.shared.peripheral.generic.methods.InventoryMethods;
 import dan200.computercraft.shared.peripheral.modem.wired.CableBlock;
 import dan200.computercraft.shared.platform.FabricConfigFile;
 import dan200.computercraft.shared.recipe.function.RecipeFunction;
+import dev.bleh.computer.CcWasmMachine;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
@@ -66,6 +68,9 @@ public class ComputerCraft {
     public static final String CLIENT_OPEN_FOLDER = "computercraft-open-folder";
 
     public static void init() {
+        // The computer is a Wasm machine; the bundled boot disk supplies Lua/CraftOS.
+        ServerContext.luaMachine = CcWasmMachine::new;
+
         for (var type : NetworkMessages.getServerbound()) {
             registerPayloadType(PayloadTypeRegistry.serverboundPlay(), type);
         }

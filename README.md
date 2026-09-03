@@ -1,3 +1,7 @@
+> This fork's **Fabric 26.2** build runs computers in Endive WebAssembly. The
+> standard boot image is Lua, running the existing CraftOS BIOS and shell.
+> See [Wasm runtime and build instructions](doc/wasm.md).
+
 <!--
 SPDX-FileCopyrightText: 2017 The CC: Tweaked Developers
 
